@@ -14,7 +14,7 @@ import configparser
 
 stapwd='abc'
 setpwd='lmf2016'
-softPath='/home/pi/lmf/'
+softPath='/home/pi/lmf2/'
 
 kconfig=configparser.ConfigParser()
 kconfig.read(softPath+"setting.ini")
@@ -454,7 +454,7 @@ def init(loop):
     global softPath
     app = web.Application(loop=loop)    
     #使用aiohttp_jinja2
-    aiohttp_jinja2.setup(app,loader=jinja2.FileSystemLoader('/home/pi/lmf/templates'))
+    aiohttp_jinja2.setup(app,loader=jinja2.FileSystemLoader(softPath+'templates'))
     
     app.router.add_route('*', '/', index1)
     app.router.add_route('*', '/index2', index2)
@@ -468,7 +468,7 @@ def init(loop):
     app.router.add_static('/image',  softPath+'image')
     app.router.add_static('/imagetmb', softPath+'imagetmb')
     srv = yield from loop.create_server(app.make_handler(), '0.0.0.0', 9001)
-    print(' v8 server started at http://0.0.0.0:9001...')               
+    print(' v2 server started at http://0.0.0.0:9001...')               
     return srv
 
 loop = asyncio.get_event_loop()
