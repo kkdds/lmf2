@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=lmf
 Comment=My Python Program
-Exec=python3 /home/pi/lmf/lmf7.py
-Icon=/home/pi/lmf/yuanpeng-home.jpg
+Exec=python3 /home/pi/lmf2/lmf7.py
+Icon=/home/pi/lmf2/yuanpeng-home.jpg
 Terminal=false
 MultipleArgs=false
 Type=Application
