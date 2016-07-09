@@ -5,6 +5,7 @@ var Gscly=0;
 var Gshowtype='all';
 var shell_sta='9';
 var running_sta='9';
+var ektime;
 $(document).ready(function(){
     //$(".runscr").css("display","none");
 
@@ -78,23 +79,25 @@ function timesup(){
 	//$('#btnoff').prop("disabled", true);
 	running_sta=false;
 	shell_sta=false;
+	all_key_disable(false);
 	//alert('done');
 	//$.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'fm'},function(r){
 		//var rj=JSON.parse(r);
 	//});
 }
 function doonoff(obj){
+	all_key_disable(true);
+	$(obj).removeAttr("disabled");
 	if(running_sta=='0'){
-	  //$('#timep').pietimer('start');
-	  timer(parseInt(Gcaitime));
-	  //$('#btnon').prop("disabled", true);
+	  ektime=timer(parseInt(Gcaitime));
 	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'fm',t:Gcaitime},function(r){
 		  //var rj=JSON.parse(r);
 		  //$('#btnoff').prop("disabled", false);
 	  });
 	}else if(running_sta=='1'){
-	  //$('#timep').pietimer('pause');
-	  //$('#btnoff').prop("disabled", true);
+	  all_key_disable(false);
+	  Gcaitime=GintDiff;
+	  clearInterval(ektime);
 	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'fm'},function(r){
 		  //var rj=JSON.parse(r);
 		  //$('#btnon').prop("disabled", false);
@@ -112,7 +115,7 @@ function getSta(){
 		$("#namescreen").text(tempture1.toFixed(1));
 		update_sta();
 		ws=setInterval("getSta()", 500);
-	}).error(function() { 
+	}).error(function(){ 
 		disconnect();
 	});
 }
@@ -122,14 +125,108 @@ function update_sta(){
 	}
 	if(running_sta=='0'){
 		//$('.disable_when_running').prop("disabled",false);
-		$('#btnon').prop("disabled", false);
-		$('#btnoff').prop("disabled", true);
+		//$('#btnon').prop("disabled", false);
+		//$('#btnoff').prop("disabled", true);
 	}
 	if(running_sta=='1'){
 		//$('.disable_when_running').prop("disabled",true);
-		$('#btnoff').prop("disabled", false);
+		//$('#btnoff').prop("disabled", false);
 	}  
 }
+function shell_up(){
+	  $.post('sta',{p:$('#pwd').val(),m:'shell',d:'up'},function(r){
+	  });
+}
+function shell_dw(){
+	  $.post('sta',{p:$('#pwd').val(),m:'shell',d:'dw'},function(r){
+	  });
+}
+function all_key_disable(tf){
+	$('.shell').prop("disabled", tf);
+	$('#btnon').prop("disabled", tf);
+	$('#btnqg_big_stm').prop("disabled", tf);
+	$('#btn_bw').prop("disabled", tf);
+	$('#btn_sk').prop("disabled", tf);
+	$('#btnqg_big_wat').prop("disabled", tf);
+	$('#btnqg_sml_wat').prop("disabled", tf);
+}
+var main_steam=true;
+function main_steam_on_off(obj){
+	all_key_disable(true);
+	$('#btnqg_big_stm').removeAttr("disabled");
+	if(main_steam){
+	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'ms',t:1},function(r){
+		  //$(obj).val('蒸汽 开');
+	  });
+	}else{
+	  all_key_disable(false);
+	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'ms'},function(r){
+		  //$(obj).val('蒸汽 关');
+	  });
+	}
+	main_steam=!main_steam;	
+}
+var sta_bw=true;
+function bw_on_off(obj){
+	all_key_disable(true);
+	$('#btn_bw').removeAttr("disabled");
+	if(sta_bw){
+	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'fs',t:1},function(r){
+		  //$(obj).val('保温 开');
+	  });
+	}else{
+	  all_key_disable(false);
+	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'fs'},function(r){
+		  //$(obj).val('保温 关');
+	  });
+	}
+	sta_bw=!sta_bw;	
+}
+var sta_shaokao=true;
+function shaokao_on_off(){
+	all_key_disable(true);
+	$('#btn_sk').removeAttr("disabled");
+	if(sta_shaokao){
+	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'sk',t:1},function(r){
+		  //$('#btn_sk').val('烧烤 开');
+		  $('.disable_when_running').prop("disabled",true);
+	  });
+	}else{
+	  all_key_disable(false);
+	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'sk'},function(r){
+		  //$('#btn_sk').val('烧烤 关');
+		  $('.disable_when_running').prop("disabled",false);
+	  });
+	}
+	sta_shaokao=!sta_shaokao;	
+}
+var liusui_b=true;
+function liusui_b_on_off(obj,speed){
+	all_key_disable(true);
+	$(obj).removeAttr("disabled");
+	if(!liusui_b){
+		speed='0';
+		all_key_disable(false);
+	}
+	$.post('sta',{p:$('#pwd').val(),m:'pump2',spd:speed},function(r){
+		
+	});
+	liusui_b=!liusui_b;	
+}
+/*function liusui_on_off(obj,speed){
+	all_key_disable();
+	$('#btnqg_big_wat').removeAttr("disabled");
+	$('#btnqg_sml_wat').removeAttr("disabled");
+	$.post('sta',{p:$('#pwd').val(),m:'pump2',spd:speed},function(r){
+		if(r.b==100){
+			$(obj).prop("disabled",true);
+		}else if(r.b==50){
+			$(obj).prop("disabled",true);
+		}else{
+			$(obj).prop("disabled",true);
+		}
+	});
+}*/
 var video_sta=true;
 function video_on_off(obj){
 	if(video_sta){
@@ -142,79 +239,6 @@ function video_on_off(obj){
 	  });
 	}
 	video_sta=!video_sta;	
-}
-function shell_up(){
-	  $.post('sta',{p:$('#pwd').val(),m:'shell',d:'up'},function(r){
-	  });
-}
-function shell_dw(){
-	  $.post('sta',{p:$('#pwd').val(),m:'shell',d:'dw'},function(r){
-	  });
-}
-var sta_slave=true;
-function slave_on_off(obj){
-	if(sta_slave){
-	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'fs',t:1},function(r){
-		  //$(obj).val('保温 开');
-	  });
-	}else{
-	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'fs'},function(r){
-		  //$(obj).val('保温 关');
-	  });
-	}
-	sta_slave=!sta_slave;	
-}
-var sta_shaokao=true;
-function shaokao_on_off(){
-	if(sta_shaokao){
-	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'sk',t:1},function(r){
-		  //$('#btn_sk').val('烧烤 开');
-		  $('.disable_when_running').prop("disabled",true);
-	  });
-	}else{
-	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'sk'},function(r){
-		  //$('#btn_sk').val('烧烤 关');
-		  $('.disable_when_running').prop("disabled",false);
-	  });
-	}
-	sta_shaokao=!sta_shaokao;	
-}
-var main_steam=true;
-function main_steam_on_off(obj){
-	if(main_steam){
-	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'ms',t:1},function(r){
-		  //$(obj).val('蒸汽 开');
-	  });
-	}else{
-	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'ms'},function(r){
-		  //$(obj).val('蒸汽 关');
-	  });
-	}
-	main_steam=!main_steam;	
-}
-var liusui_b=true;
-function liusui_b_on_off(obj,speed){
-	if(!liusui_b){
-		speed='0';
-	}
-	$.post('sta',{p:$('#pwd').val(),m:'pump2',spd:speed},function(r){
-		
-	});
-	liusui_b=!liusui_b;	
-}
-function liusui_on_off(obj,speed){
-	$('#btnqg_big_wat').prop("disabled",false);
-	$('#btnqg_sml_wat').prop("disabled",false);
-	$('#btnqg_off_wat').prop("disabled",false);
-	$.post('sta',{p:$('#pwd').val(),m:'pump2',spd:speed},function(r){
-		if(r.b==100){
-			$(obj).prop("disabled",true);
-		}else if(r.b==50){
-			$(obj).prop("disabled",true);
-		}else{
-			$(obj).prop("disabled",true);
-		}
-	});
 }
 function show_cai_class(showtype,cbtn){
 	$(".scr_div").css("background-image","none");

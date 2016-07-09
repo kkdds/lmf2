@@ -11,6 +11,8 @@ from pyomxplayer import OMXPlayer
 #from qiv import QIV
 from urllib.parse import unquote
 import configparser
+import threading
+ttim=0
 
 stapwd='abc'
 setpwd='lmf2016'
@@ -73,7 +75,7 @@ GPIO.setup(moto_2_p, GPIO.OUT)
 p2 = GPIO.PWM(moto_2_p, 50)
 p2.start(0)
 
-huixiqi=0
+huixiqi=-1
 watchdog=0
 eTimer1=False
 eIntval1=5
@@ -215,9 +217,9 @@ def video(request):
 
 @asyncio.coroutine
 def return_sta(request):
-    global eTimer1,eIntval1,eTimer2,eIntval2,sta_shell,sta_onoff,watchdog
-    global shell_up_down,shell_ud_t1,shell_ud_t2u,shell_ud_t2d,shell_ud_t3
-    global stapwd,setpwd,softPath,tempeture_1
+    global eTimer1,eIntval1,eTimer2,eIntval2,sta_onoff,watchdog
+    global shell_up_down,sta_shell
+    global stapwd,setpwd,softPath,tempeture_1,ttim,t
 
     hhdd=[('Access-Control-Allow-Origin','*')]
     po = yield from request.post()
@@ -233,14 +235,23 @@ def return_sta(request):
             watchdog=0
             tbody= '{"shell_sta":'+str(sta_shell)+',"running_sta":'+str(sta_onoff)+',"tmp1":'+str(tempeture_1)+'}'
             return web.Response(headers=hhdd ,body=tbody.encode('utf-8'))
+        
+        elif po['m'] == 'addtime':
+            watchdog=0
+            #print('old stop at'+str(eIntval1))
+            eIntval1+=int(po['d'])
+            #print('shall stop at '+str(eIntval1))
+            tbody= '{"addtime":'+po['d']+'}'
+            return web.Response(headers=hhdd ,body=tbody.encode('utf-8'))
                 
         elif po['m'] == 'gpioon':
             delaytime=po['t']
             if po['d']== 'fm':
                 eTimer1=True
                 eIntval1=int(time.time())+int(delaytime)
-                print('eTimer1 1 start')
-                sta_shell=1
+                ttim=time.time()
+                print('eTimer1 start')
+                #sta_shell=1
                 sta_onoff=1
                 GPIO.output(io_zq, 0)
                 GPIO.output(io_jr, 0)
@@ -263,6 +274,7 @@ def return_sta(request):
                 sta_onoff=0
                 GPIO.output(io_zq, 1)
                 GPIO.output(io_jr, 1)
+                eTimer1=False
                 tbody= '{"a":"zq+jr","b":"off"}'
             elif po['d']== 'fs':
                 GPIO.output(io_bw, 1)
@@ -278,31 +290,31 @@ def return_sta(request):
             return web.Response(headers=hhdd ,body=tbody.encode('utf-8'))
                 
         elif po['m'] == 'shell':
-            GPIO.output(moto_1_f, 1)
-            GPIO.output(moto_1_r, 1)
-            shell_ud_t1=shell_ud_t1_set
-            shell_ud_t3=shell_ud_t3_set
             if po['d']== 'up' and sta_shell!=1:
+                t = threading.Timer(shell_ud_t1_set/1000, tt2)
                 GPIO.output(moto_1_r, 0)
-                p.ChangeDutyCycle(40)
-                shell_ud_t2u=shell_ud_t2u_set
-                shell_ud_t2d=-1
+                GPIO.output(moto_1_f, 1)
+                p.ChangeDutyCycle(100)                
+                t.start()
                 shell_up_down=0
                 sta_shell=1
                 tbody= '{"a":"shell","b":"up"}'
             elif po['d']== 'dw' and sta_shell!=1:
+                t = threading.Timer(shell_ud_t1_set/1000, tt2)
+                GPIO.output(moto_1_r, 1)
                 GPIO.output(moto_1_f, 0)
-                p.ChangeDutyCycle(40)
-                shell_ud_t2u=-1
-                shell_ud_t2d=shell_ud_t2d_set
+                p.ChangeDutyCycle(100)
+                t.start()
                 shell_up_down=2
                 sta_shell=1
                 tbody= '{"a":"shell","b":"dw"}'
             elif sta_shell==1:
-                sta_shell=2
-                p.ChangeDutyCycle(0)
+                #sta_shell=1
+                #t.cancel()
+                #p.ChangeDutyCycle(0)
                 tbody= '{"a":"shell","b":"stop"}'
             print(tbody)
+            ttim=time.time()
             return web.Response(headers=hhdd ,body=tbody.encode('utf-8'))
                 
         elif po['m'] == 'pump2':
@@ -317,6 +329,40 @@ def return_sta(request):
         tbody= '{"p":"error"}'
         return web.Response(headers=hhdd ,body=tbody.encode('utf-8'))
 
+
+def tt2():
+    global t,shell_ud_t2d_set,shell_ud_t2u_set,shell_up_down
+    if shell_up_down==0:
+        shell_t2=shell_ud_t2u_set/1000
+    else:
+        shell_t2=shell_ud_t2d_set/1000
+    t = threading.Timer(shell_t2, tt3)
+    p.ChangeDutyCycle(100)
+    t.start()
+    #print('tt2 '+str(ttim-time.time()))
+
+def tt3():
+    global shell_ud_t3_set,t
+    t = threading.Timer(shell_ud_t3_set/1000, ttfin)
+    if shell_up_down==0:
+        p.ChangeDutyCycle(50)
+    else:
+        p.ChangeDutyCycle(25)
+    t.start()
+    #print('tt3 '+str(ttim-time.time()))
+
+def tt4():
+    global t
+    t = threading.Timer(3, ttfin)
+    t.start()
+    p.ChangeDutyCycle(4)
+    #print('tt4 '+str(ttim-time.time()))
+
+def ttfin():
+    global ttim,shell_up_down,sta_shell
+    p.ChangeDutyCycle(0)
+    sta_shell=shell_up_down
+    print('shell run end '+str(ttim-time.time()))
 
 
 @asyncio.coroutine
@@ -380,8 +426,7 @@ def get_temp():
 @asyncio.coroutine
 def loop_info():
     global eTimer1,eIntval1,eTimer2,eIntval2,sta_shell,sta_onoff
-    global watchdog,huixiqi,p
-    global shell_up_down,shell_ud_t1,shell_ud_t2u,shell_ud_t2d,shell_ud_t3
+    global watchdog,huixiqi,p,ttim
     while True:
         yield from asyncio.sleep(0.05)
         watchdog+=1
@@ -396,17 +441,20 @@ def loop_info():
             GPIO.output(io_hx, 1)
             
         if huixiqi>0:
-            huixiqi-=1;            
-        else:
-            #huixiqi=0
+            huixiqi-=1            
+        elif huixiqi==0:
+            huixiqi=-1
             GPIO.output(io_hx, 1)
+            print('huixiqi stop')
                    
         if eTimer1==True:
             #sta_shell=1
             if int(time.time())>=int(eIntval1):
-                print('eTimer1 1 end')
+                sta_onoff=0
+                sta_shell=2
                 GPIO.output(io_jr, 1)
                 GPIO.output(io_zq, 1)
+                print('eTimer1 end '+str(time.time()-ttim))
                 eTimer1=False
                 sta_shell=2
                 sta_onoff=0
@@ -414,38 +462,6 @@ def loop_info():
                 GPIO.output(io_hx, 0)
                 print('huixiqi on')
                 
-        #if shell_up_down != 0:
-        if sta_shell==1:
-            #sta_shell=1
-            if shell_ud_t1 > 0:
-                shell_ud_t1-=1
-            elif shell_ud_t1 == 0:
-                p.ChangeDutyCycle(65)
-                shell_ud_t1 =-1
-            elif shell_ud_t2u > 0:
-                shell_ud_t2u-=1
-            elif shell_ud_t2u == 0:
-                p.ChangeDutyCycle(shell_sdu)
-                shell_ud_t2u =-1
-            elif shell_ud_t2d > 0:
-                shell_ud_t2d-=1
-            elif shell_ud_t2d == 0:
-                p.ChangeDutyCycle(shell_sdd)
-                shell_ud_t2d =-1
-            elif shell_ud_t3 > 0:
-                shell_ud_t3-=1
-            elif shell_ud_t3 == 0:
-                shell_ud_t3 =-1
-                p.ChangeDutyCycle(0)
-                if shell_up_down == 0:
-                    sta_shell=0
-                elif shell_up_down == 2:
-                    sta_shell=2
-                print('shell run end '+str(sta_shell))
-
-        else: # shell_up_down==0
-            shell_up_down=0
-            #p.stop()
     return 1
 
 
