@@ -9,20 +9,23 @@ var ektime;
 $(document).ready(function(){
     //$(".runscr").css("display","none");
 
-    $('.runModalScr').modal({
-        trigger:'.runModalScr',
+    $('.mantime').modal({
+        trigger:'.mantime',
         olay:'div.overlay',
         modals:'div#modal2',//手动设置时间
         close:'.closeBtn'
     });
 	
-  $("#setMtimebtn").click(function(){	 
+  $("#setMtimebtn").click(function(){
+	  if(running_sta==true){
+		  return false;
+	  }
     var cctime=parseInt($('#setMtime').val()); 
 	if(isNaN(cctime)){
 		return false;
 	}
 	Gcaitime=cctime;
-	sec2minsec();
+	sec2minsec(Gcaitime);
 
 	$('div.overlay').hide();
 	$('div.modal').hide();
@@ -48,7 +51,7 @@ $(document).ready(function(){
 		  return false;
 	  }
 	  Gcaitime=$(this).parent().attr("caitime");
-	  sec2minsec();
+	  sec2minsec(Gcaitime);
 	  
 	  Gvname=$(this).parent().attr("vname");
 	  Gpcai=$(this).parent().attr("bgp");
@@ -59,14 +62,20 @@ $(document).ready(function(){
 	  
 	  return false;
   });
-/*
-  $(".selzone").click(function(){
-	  $(this).toggleClass("myselcai");
+  
+  $("#addtime").click(function(){
+	  if(running_sta==false){return false;}
+	  $.post('sta',{p:$('#pwd').val(),m:'addtime',d:20},function(r){
+		  var rj=JSON.parse(r);
+		  clearInterval(ektime);
+		  ektime=timer(parseInt(rj.addtime));
+		  sec2minsec(rj.addtime);
+	  });
 	  return false;
-  });*/
+  });
 });
-function sec2minsec(){
-  intDiff=parseInt(Gcaitime);
+function sec2minsec(ti){
+  intDiff=parseInt(ti);
   minute = Math.floor(intDiff / 60) ;
   second = Math.floor(intDiff) - (minute * 60);
   if (minute <= 9) minute = '0' + minute;
@@ -80,10 +89,7 @@ function timesup(){
 	running_sta=false;
 	shell_sta=false;
 	all_key_disable(false);
-	//alert('done');
-	//$.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'fm'},function(r){
-		//var rj=JSON.parse(r);
-	//});
+	$("#addtime").css("display","none");
 }
 function doonoff(obj){
 	all_key_disable(true);
@@ -93,6 +99,7 @@ function doonoff(obj){
 	  $.post('sta',{p:$('#pwd').val(),m:'gpioon',d:'fm',t:Gcaitime},function(r){
 		  //var rj=JSON.parse(r);
 		  //$('#btnoff').prop("disabled", false);
+		  $("#addtime").css("display","block");
 	  });
 	}else if(running_sta=='1'){
 	  all_key_disable(false);
@@ -101,6 +108,7 @@ function doonoff(obj){
 	  $.post('sta',{p:$('#pwd').val(),m:'gpiooff',d:'fm'},function(r){
 		  //var rj=JSON.parse(r);
 		  //$('#btnon').prop("disabled", false);
+		  $("#addtime").css("display","none");
 	  });
 	}
 	return false;

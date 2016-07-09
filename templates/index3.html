@@ -48,19 +48,22 @@
 </div>
     
 <div class="runModalScr">
-    <div style="background-color:#FFF; float:left;text-align:center;margin:0px 30px">
+    <div class="mantime">
       <div style=" font-size:18px;">min&nbsp;&nbsp;&nbsp;&nbsp;sec</div>
       <span id="minute_show">00</span>:<span id="second_show">00</span>
     </div>           
-    <div style="background-color:#FFF; float:left; text-align:center;line-height:40px;padding:0px 30px; border-left:3px solid #333333">
+    <div style="background-color:#FFF;float:left; text-align:center;line-height:40px;padding:0px 30px; border-left:3px solid #333333">
       <div><span id="namescreen">v2</span> ℃</div>
       <div style="font-size:18px">实时温度</div>
+    </div>
+    <div style="background-color:#FFF;float:left;text-align:center;">
+    	<input type="button" id="addtime" value="增加20秒">
     </div>
 </div> 
 
 <div class="btm_div">
   <div class="codrops-btm">   	
-    	<!--<input type="button" id="cntBtn" class="abtn bbtn disable_when_running " value="连接">-->        
+  <!--<input type="button" id="cntBtn" class="abtn bbtn disable_when_running " value="连接">-->       
   <input type="button" class="btmbtn shell" value="" onClick="shell_up()">
   <input type="button" class="btmbtn shell" value="" onClick="shell_dw()">  
   <input type="button" class="btmbtn" id="btnon" value="" onClick="doonoff(this)">

@@ -63,7 +63,7 @@ moto_1_r=26 #反转
 GPIO.setup(moto_1_f, GPIO.OUT)
 GPIO.setup(moto_1_r, GPIO.OUT)
 GPIO.setup(moto_1_p, GPIO.OUT)
-p = GPIO.PWM(moto_1_p, 50)
+p = GPIO.PWM(moto_1_p, 1500)
 p.start(0)
 
 moto_2_p=21 #脉宽输出
@@ -85,10 +85,6 @@ sta_shell=0
 sta_onoff=0
 shell_up_down=0
 
-shell_ud_t1=1
-shell_ud_t2u=2
-shell_ud_t2d=2
-shell_ud_t3=1
 '''
 shell_sta
 0 top stop
@@ -168,7 +164,7 @@ def index3(request):
 
 @aiohttp_jinja2.template('set.html')
 def setpage(request):
-    #global shell_ud_t1_set,shell_ud_t2u_set,shell_ud_t2d_set,shell_ud_t3_set
+    global shell_ud_t1_set,shell_ud_t2u_set,shell_ud_t2d_set,shell_ud_t3_set
     #global softPath
     shell_ud_t1_set=kconfig.getint("yp","shell_ud_t1_set")
     shell_ud_t2u_set=kconfig.getint("yp","shell_ud_t2u_set")
@@ -241,7 +237,7 @@ def return_sta(request):
             #print('old stop at'+str(eIntval1))
             eIntval1+=int(po['d'])
             #print('shall stop at '+str(eIntval1))
-            tbody= '{"addtime":'+po['d']+'}'
+            tbody= '{"addtime":'+str(eIntval1-int(time.time()))+'}'
             return web.Response(headers=hhdd ,body=tbody.encode('utf-8'))
                 
         elif po['m'] == 'gpioon':
@@ -342,7 +338,7 @@ def tt2():
     #print('tt2 '+str(ttim-time.time()))
 
 def tt3():
-    global shell_ud_t3_set,t
+    global t,shell_ud_t3_set,shell_up_down
     t = threading.Timer(shell_ud_t3_set/1000, ttfin)
     if shell_up_down==0:
         p.ChangeDutyCycle(50)
@@ -379,17 +375,17 @@ def setting(request):
         return web.Response(headers=hhdd ,body=tbody.encode('utf-8'))
 
     if po['m'] == 'w' and po['p'] == setpwd:
-        shell_ud_t1_set=po['t1']
-        shell_ud_t2u_set=po['t2u']
-        shell_ud_t2d_set=po['t2d']
-        shell_ud_t3_set=po['t3']
+        shell_ud_t1_set=int(po['t1'])
+        shell_ud_t2u_set=int(po['t2u'])
+        shell_ud_t2d_set=int(po['t2d'])
+        shell_ud_t3_set=int(po['t3'])
         shell_sdu=po['sdu']
         shell_sdd=po['sdd']
         stapwd=po['stapwd']
-        kconfig.set("yp","shell_ud_t1_set",str(shell_ud_t1_set))
-        kconfig.set("yp","shell_ud_t2u_set",str(shell_ud_t2u_set))
-        kconfig.set("yp","shell_ud_t2d_set",str(shell_ud_t2d_set))
-        kconfig.set("yp","shell_ud_t3_set",str(shell_ud_t3_set))
+        kconfig.set("yp","shell_ud_t1_set",po['t1'])
+        kconfig.set("yp","shell_ud_t2u_set",po['t2u'])
+        kconfig.set("yp","shell_ud_t2d_set",po['t2d'])
+        kconfig.set("yp","shell_ud_t3_set",po['t3'])
         kconfig.set("yp","shell_sdu",str(shell_sdu))
         kconfig.set("yp","shell_sdd",str(shell_sdd))
         kconfig.set("yp","stapwd",stapwd)
