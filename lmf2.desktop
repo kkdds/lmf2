@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=lmf
+Name=lmf2
 Comment=My Python Program
 Exec=python3 /home/pi/lmf2/lmf7.py
 Icon=/home/pi/lmf2/yuanpeng-home.jpg
